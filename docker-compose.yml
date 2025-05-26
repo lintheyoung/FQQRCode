@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  artwork-api:
+    build: .
+    container_name: artwork-screenshot-api
+    restart: unless-stopped
+    ports:
+      - "7979:8000"  # 映射到服务器的7979端口
+    volumes:
+      # 挂载静态文件目录到宿主机（可选，用于持久化）
+      - ./static_data:/app/static
+      # 挂载日志目录（可选）
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Shanghai
+      - SERVER_URL=http://localhost:7979  # 更新为7979端口
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - artwork-network
+
+  # 可选：如果你想要添加 Redis 用于生产环境
+  redis:
+    image: redis:7-alpine
+    container_name: artwork-redis
+    restart: unless-stopped
+    ports:
+      - "6380:6379"  # 避免与可能存在的Redis冲突
+    volumes:
+      - redis_data:/data
+    networks:
+      - artwork-network
+    command: redis-server --appendonly yes
+
+networks:
+  artwork-network:
+    driver: bridge
+
+volumes:
+  redis_data:
