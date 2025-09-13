@@ -24,12 +24,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class ScreenshotClient:
-    def __init__(self, server_url: str = "https://fq.video2tag.com", capture_region: Optional[Tuple[int, int, int, int]] = None):
+    def __init__(self, server_url: str = "https://qrcode.zeabur.app", capture_region: Optional[Tuple[int, int, int, int]] = None):
         """
         初始化截图客户端
         
         Args:
-            server_url: 服务器地址，例如 "https://fq.video2tag.com"
+            server_url: 服务器地址，例如 "https://qrcode.zeabur.app"
             capture_region: 截图区域 (x, y, width, height)，None表示全屏截图
         """
         self.server_url = server_url.rstrip('/')
@@ -470,9 +470,9 @@ def main():
     capture_region = get_capture_region()
     
     # 服务器地址配置
-    server_url = input("\n请输入服务器地址 (默认: https://fq.video2tag.com): ").strip()
+    server_url = input("\n请输入服务器地址 (默认: https://qrcode.zeabur.app): ").strip()
     if not server_url:
-        server_url = "https://fq.video2tag.com"
+        server_url = "https://qrcode.zeabur.app"
     
     # 轮询间隔配置
     try:

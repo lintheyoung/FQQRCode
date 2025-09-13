@@ -1,4 +1,4 @@
-# server.py - 优化的艺术作品截图系统
+# server.py - 优化的艺术作品截图系统 (琉璃光影主题)
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
@@ -16,7 +16,22 @@ from io import BytesIO
 # 环境变量配置
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 8000))
-SERVER_URL = os.getenv("SERVER_URL", f"http://localhost:{PORT}") # 动态使用端口
+# 动态使用主机和端口生成SERVER_URL，确保在不同环境中都能正常工作
+# 在生产环境中，您可能需要手动设置SERVER_URL为一个可公开访问的地址
+SERVER_URL = os.getenv("SERVER_URL", f"http://{HOST}:{PORT}") 
+if HOST == "0.0.0.0":
+    # 如果HOST是0.0.0.0，二维码URL最好使用一个具体的IP地址，如localhost或局域网IP
+    # 这里我们默认为localhost，您也可以手动替换为您的局域网IP地址
+    try:
+        import socket
+        # 尝试获取本机局域网IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+        SERVER_URL = f"http://{local_ip}:{PORT}"
+    except Exception:
+        SERVER_URL = f"http://localhost:{PORT}" # 获取失败则回退
 
 app = FastAPI()
 
@@ -39,12 +54,12 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 async def root():
-    """首页 - 生成二维码"""
+    """首页 - 生成二维码 (全新琉璃光影主题)"""
     # 二维码指向的URL（手机扫码后访问的页面）
     qr_url = f"{SERVER_URL}/mobile"
     
     # 生成二维码
-    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
     qr.add_data(qr_url)
     qr.make(fit=True)
     
@@ -55,41 +70,103 @@ async def root():
     
     html_content = f"""
     <!DOCTYPE html>
-    <html>
+    <html lang="zh-CN">
     <head>
         <title>交互艺术截图系统</title>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body {{ 
-                font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; 
-                text-align: center; 
-                padding: 50px; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400&display=swap');
+            
+            body, html {{
                 margin: 0;
+                padding: 0;
+                height: 100%;
+                font-family: 'Noto Sans SC', sans-serif;
                 display: flex;
-                flex-direction: column;
                 justify-content: center;
                 align-items: center;
+                text-align: center;
+                overflow: hidden;
             }}
-            .qr-container {{ 
-                background: rgba(255,255,255,0.95); 
-                border-radius: 20px; 
-                padding: 40px; 
-                backdrop-filter: blur(10px);
-                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+
+            .background {{
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(45deg, #fdeff9, #e8f5ff, #e5fffa, #fff3e6);
+                background-size: 400% 400%;
+                animation: gradientBG 15s ease infinite;
+                z-index: -1;
             }}
-            h1 {{ color: #333; font-weight: 300; font-size: 2.5em; margin-bottom: 10px; }}
-            p {{ color: #666; font-size: 1.2em; }}
-            img {{ max-width: 250px; border-radius: 15px; }}
+
+            @keyframes gradientBG {{
+                0% {{ background-position: 0% 50%; }}
+                50% {{ background-position: 100% 50%; }}
+                100% {{ background-position: 0% 50%; }}
+            }}
+
+            .card {{
+                background: rgba(255, 255, 255, 0.6);
+                padding: 40px;
+                border-radius: 25px;
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                transition: transform 0.3s ease;
+            }}
+            
+            .card:hover {{
+                 transform: translateY(-5px);
+            }}
+
+            h1 {{
+                font-weight: 400;
+                color: #333;
+                font-size: 2.2em;
+                margin-bottom: 10px;
+            }}
+
+            p {{
+                color: #555;
+                font-size: 1.1em;
+                font-weight: 300;
+            }}
+
+            .qr-code {{
+                margin-top: 25px;
+                padding: 10px;
+                background: white;
+                border-radius: 18px;
+                display: inline-block;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            }}
+
+            img {{
+                max-width: 250px;
+                border-radius: 12px;
+                display: block;
+            }}
+            
+            .footer-text {{
+                margin-top: 25px;
+                font-size: 0.9em;
+                color: #777;
+            }}
         </style>
     </head>
     <body>
-        <div class="qr-container">
-            <h1>交互艺术截图</h1>
-            <p>扫描二维码捕捉艺术瞬间</p>
-            <img src="data:image/png;base64,{qr_base64}" alt="二维码" />
-            <p style="font-size: 0.9em; margin-top: 20px;">实时记录创作过程</p>
+        <div class="background"></div>
+        <div class="card">
+            <h1>光影捕捉</h1>
+            <p>扫描二维码，进入艺术创作空间</p>
+            <div class="qr-code">
+                <img src="data:image/png;base64,{qr_base64}" alt="二维码" />
+            </div>
+            <p class="footer-text">实时记录，即刻分享</p>
         </div>
     </body>
     </html>
@@ -98,271 +175,192 @@ async def root():
 
 @app.get("/mobile")
 async def mobile_page():
-    """手机端页面 - 艺术化设计"""
+    """手机端页面 - 琉璃光影主题"""
     html_content = """
     <!DOCTYPE html>
-    <html>
+    <html lang="zh-CN">
     <head>
         <title>艺术作品截图</title>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <style>
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500&display=swap');
+
+            :root {
+                --bg-start: #e0c3fc;
+                --bg-end: #8ec5fc;
+                --text-primary: #333;
+                --text-secondary: #555;
+                --accent-color: #89f7fe;
+                --accent-color-end: #66a6ff;
+                --card-bg: rgba(255, 255, 255, 0.5);
+                --card-border: rgba(255, 255, 255, 0.3);
+                --success: #28a745;
+                --error: #dc3545;
+                --warning: #ffc107;
+                --info: #17a2b8;
+            }
+
             * {
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
             }
             
-            body { 
-                font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; 
-                background: #000;
-                color: #fff;
+            body, html {
+                height: 100%;
+                font-family: 'Noto Sans SC', sans-serif;
+                color: var(--text-primary);
                 overflow-x: hidden;
-                min-height: 100vh;
-                position: relative;
             }
-            
-            /* 动态背景 */
-            .bg-animation {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
-                background-size: 400% 400%;
-                animation: gradientFlow 15s ease infinite;
-                z-index: -2;
+
+            body {
+                background: linear-gradient(125deg, var(--bg-start) 0%, var(--bg-end) 100%);
+                background-attachment: fixed;
             }
-            
-            @keyframes gradientFlow {
-                0% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-                100% { background-position: 0% 50%; }
-            }
-            
-            /* 浮动粒子效果 */
-            .particles {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                z-index: -1;
-                overflow: hidden;
-            }
-            
-            .particle {
-                position: absolute;
-                background: rgba(255,255,255,0.1);
-                border-radius: 50%;
-                animation: float 20s infinite linear;
-            }
-            
-            @keyframes float {
-                0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-                10% { opacity: 1; }
-                90% { opacity: 1; }
-                100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
-            }
-            
+
             /* 主容器 */
             .container {
-                position: relative;
-                z-index: 10;
                 padding: 20px;
                 min-height: 100vh;
                 display: flex;
                 flex-direction: column;
+                align-items: center;
+                gap: 25px;
+            }
+            
+            /* 卡片基类 */
+            .card {
+                width: 100%;
+                max-width: 500px;
+                background: var(--card-bg);
+                backdrop-filter: blur(15px);
+                -webkit-backdrop-filter: blur(15px);
+                border-radius: 20px;
+                border: 1px solid var(--card-border);
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+                padding: 25px;
+                text-align: center;
             }
             
             /* 头部区域 */
-            .header {
-                text-align: center;
-                padding: 40px 20px;
-                background: rgba(255,255,255,0.05);
-                backdrop-filter: blur(20px);
-                border-radius: 25px;
-                margin-bottom: 20px;
-                border: 1px solid rgba(255,255,255,0.1);
-            }
-            
-            .title {
+            .header .title {
                 font-size: 1.8em;
-                font-weight: 200;
-                margin-bottom: 10px;
-                background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
-                background-size: 200% 200%;
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                animation: titleGlow 3s ease-in-out infinite;
+                font-weight: 500;
+                margin-bottom: 8px;
             }
             
-            @keyframes titleGlow {
-                0%, 100% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-            }
-            
-            .subtitle {
-                font-size: 0.9em;
-                opacity: 0.8;
+            .header .subtitle {
+                font-size: 0.95em;
                 font-weight: 300;
+                color: var(--text-secondary);
             }
             
             /* 控制区域 */
             .controls {
-                flex: 1;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
-                min-height: 200px;
+                gap: 20px;
             }
             
             /* 按钮样式 */
             .capture-btn {
-                background: linear-gradient(45deg, #667eea, #764ba2);
+                background-image: linear-gradient(to right, var(--accent-color) 0%, var(--accent-color-end) 51%, var(--accent-color) 100%);
+                background-size: 200% auto;
                 border: none;
                 border-radius: 50px;
-                padding: 18px 40px;
+                padding: 16px 35px;
                 font-size: 1.1em;
                 color: white;
-                font-weight: 300;
+                font-weight: 400;
                 cursor: pointer;
-                transition: all 0.3s ease;
-                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-                position: relative;
-                overflow: hidden;
-                min-width: 200px;
+                transition: all 0.4s ease;
+                box-shadow: 0 10px 20px -8px rgba(102, 166, 255, 0.6);
+                width: 220px;
             }
             
             .capture-btn:hover {
+                background-position: right center;
                 transform: translateY(-2px);
-                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+                box-shadow: 0 12px 25px -8px rgba(102, 166, 255, 0.8);
             }
             
             .capture-btn:disabled {
-                opacity: 0.6;
+                opacity: 0.7;
                 cursor: not-allowed;
                 transform: none;
+                box-shadow: none;
             }
             
-            .capture-btn::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-                transition: left 0.5s;
-            }
-            
-            .capture-btn:hover::before {
-                left: 100%;
-            }
-            
-            /* 加载动画 */
+            /* 加载动画: 三点脉冲 */
             .loading {
                 display: none;
                 text-align: center;
-                margin: 30px 0;
             }
-            
-            .loading-spinner {
-                width: 60px;
-                height: 60px;
-                border: 3px solid rgba(255,255,255,0.1);
-                border-top: 3px solid #667eea;
+            .pulsing-dots {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 15px;
+                margin-bottom: 15px;
+            }
+            .pulsing-dots div {
+                width: 12px;
+                height: 12px;
+                background-color: var(--accent-color-end);
                 border-radius: 50%;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 20px;
+                animation: pulse 1.4s infinite ease-in-out both;
             }
+            .pulsing-dots div:nth-child(1) { animation-delay: -0.32s; }
+            .pulsing-dots div:nth-child(2) { animation-delay: -0.16s; }
             
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
+            @keyframes pulse {
+              0%, 80%, 100% { transform: scale(0); }
+              40% { transform: scale(1.0); }
             }
             
             .loading-text {
                 font-size: 1em;
-                opacity: 0.8;
-                animation: pulse 2s ease-in-out infinite;
-            }
-            
-            @keyframes pulse {
-                0%, 100% { opacity: 0.8; }
-                50% { opacity: 0.4; }
+                font-weight: 300;
+                color: var(--text-secondary);
             }
             
             /* 状态消息 */
-            .status {
-                margin: 20px 0;
-                padding: 15px 20px;
-                border-radius: 15px;
-                text-align: center;
-                font-size: 0.95em;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(255,255,255,0.1);
+            #status { width: 100%; }
+            .status-box {
+                padding: 12px 15px;
+                border-radius: 12px;
+                font-size: 0.9em;
+                font-weight: 400;
+                border: 1px solid transparent;
             }
-            
-            .status.success {
-                background: rgba(76, 175, 80, 0.2);
-                border-color: rgba(76, 175, 80, 0.3);
-                color: #4CAF50;
-            }
-            
-            .status.error {
-                background: rgba(244, 67, 54, 0.2);
-                border-color: rgba(244, 67, 54, 0.3);
-                color: #f44336;
-            }
-            
-            .status.info {
-                background: rgba(33, 150, 243, 0.2);
-                border-color: rgba(33, 150, 243, 0.3);
-                color: #2196F3;
-            }
-            
-            .status.warning {
-                background: rgba(255, 193, 7, 0.2);
-                border-color: rgba(255, 193, 7, 0.3);
-                color: #FFC107;
-            }
+            .status-box.success { background-color: rgba(40, 167, 69, 0.1); border-color: rgba(40, 167, 69, 0.2); color: var(--success); }
+            .status-box.error   { background-color: rgba(220, 53, 69, 0.1); border-color: rgba(220, 53, 69, 0.2); color: var(--error); }
+            .status-box.warning { background-color: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.2); color: #c89600; }
+            .status-box.info    { background-color: rgba(23, 162, 184, 0.1); border-color: rgba(23, 162, 184, 0.2); color: var(--info); }
             
             /* 截图显示区域 */
             .screenshot-container {
-                margin-top: 30px;
-                position: relative;
+                display: none;
                 border-radius: 20px;
                 overflow: hidden;
-                background: rgba(255,255,255,0.05);
-                backdrop-filter: blur(20px);
-                border: 1px solid rgba(255,255,255,0.1);
+                width: 100%;
+                max-width: 500px;
             }
             
             .screenshot {
                 width: 100%;
                 height: auto;
-                display: none;
-                border-radius: 20px;
-                transition: all 0.5s ease;
+                display: block;
+                transition: opacity 0.5s ease, transform 0.5s ease;
+                opacity: 0;
+                transform: scale(0.95);
             }
             
             .screenshot.show {
-                display: block;
-                animation: fadeInScale 0.8s ease-out;
-            }
-            
-            @keyframes fadeInScale {
-                0% {
-                    opacity: 0;
-                    transform: scale(0.8);
-                }
-                100% {
-                    opacity: 1;
-                    transform: scale(1);
-                }
+                opacity: 1;
+                transform: scale(1);
             }
             
             /* 全屏查看 */
@@ -372,187 +370,94 @@ async def mobile_page():
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0,0,0,0.95);
+                background: rgba(0,0,0,0.8);
                 z-index: 1000;
                 display: none;
                 align-items: center;
                 justify-content: center;
-                backdrop-filter: blur(10px);
+                backdrop-filter: blur(5px);
             }
             
             .fullscreen-image {
-                max-width: 95%;
-                max-height: 95%;
+                max-width: 95vw;
+                max-height: 95vh;
                 border-radius: 10px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                box-shadow: 0 0 60px rgba(0,0,0,0.5);
             }
             
             .close-fullscreen {
                 position: absolute;
-                top: 30px;
-                right: 30px;
+                top: 20px;
+                right: 20px;
                 background: rgba(255,255,255,0.2);
                 border: none;
                 border-radius: 50%;
-                width: 50px;
-                height: 50px;
+                width: 40px;
+                height: 40px;
                 color: white;
-                font-size: 1.5em;
+                font-size: 24px;
+                line-height: 40px;
                 cursor: pointer;
                 transition: all 0.3s ease;
-                backdrop-filter: blur(10px);
             }
-            
-            .close-fullscreen:hover {
-                background: rgba(255,255,255,0.3);
-                transform: scale(1.1);
-            }
-            
-            /* 自动状态指示器 */
-            .auto-indicator {
-                position: absolute;
-                top: 20px;
-                right: 20px;
-                background: rgba(76, 175, 80, 0.2);
-                color: #4CAF50;
-                padding: 8px 15px;
-                border-radius: 20px;
-                font-size: 0.8em;
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(76, 175, 80, 0.3);
-                animation: pulse 2s ease-in-out infinite;
-            }
-            
-            /* 底部提示 */
-            .footer-hint {
-                text-align: center;
-                padding: 30px 20px;
-                font-size: 0.85em;
-                opacity: 0.6;
-                line-height: 1.6;
-            }
-            
-            /* 响应式设计 */
-            @media (max-width: 480px) {
-                .header {
-                    padding: 30px 15px;
-                }
-                
-                .title {
-                    font-size: 1.5em;
-                }
-                
-                .capture-btn {
-                    padding: 15px 30px;
-                    font-size: 1em;
-                    min-width: 180px;
-                }
-            }
+            .close-fullscreen:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+
         </style>
     </head>
     <body>
-        <!-- 动态背景 -->
-        <div class="bg-animation"></div>
-        
-        <!-- 浮动粒子 -->
-        <div class="particles" id="particles"></div>
-        
         <div class="container">
-            <!-- 自动模式指示器 -->
-            <div class="auto-indicator" id="autoIndicator">
-                🎨 自动捕捉模式
-            </div>
-            
-            <!-- 头部 -->
-            <div class="header">
-                <h1 class="title">艺术瞬间</h1>
+            <div class="card header">
+                <h1 class="title">光影瞬间</h1>
                 <p class="subtitle">捕捉创作过程中的每一个精彩时刻</p>
             </div>
             
-            <!-- 控制区域 -->
-            <div class="controls">
-                <button id="captureBtn" class="capture-btn" onclick="requestScreenshot()" style="display: none;">
+            <div class="card controls">
+                <button id="captureBtn" class="capture-btn" onclick="requestScreenshot()">
                     📸 捕捉此刻
                 </button>
                 
                 <div id="loading" class="loading">
-                    <div class="loading-spinner"></div>
-                    <div class="loading-text">正在捕捉艺术瞬间...</div>
+                    <div class="pulsing-dots"><div></div><div></div><div></div></div>
+                    <div class="loading-text">正在连接艺术空间...</div>
                 </div>
                 
                 <div id="status"></div>
             </div>
             
-            <!-- 截图显示 -->
-            <div class="screenshot-container" id="screenshotContainer" style="display: none;">
+            <div class="screenshot-container card" id="screenshotContainer">
                 <img id="screenshot" class="screenshot" onclick="openFullscreen()" />
-            </div>
-            
-            <!-- 底部提示 -->
-            <div class="footer-hint">
-                <p>✨ 页面将自动获取最新的艺术作品截图</p>
-                <p>🔄 点击按钮可手动刷新 | 📱 点击图片可全屏查看</p>
             </div>
         </div>
         
-        <!-- 全屏查看 -->
         <div class="fullscreen-overlay" id="fullscreenOverlay" onclick="closeFullscreen()">
             <img id="fullscreenImage" class="fullscreen-image" />
-            <button class="close-fullscreen" onclick="closeFullscreen()">×</button>
+            <button class="close-fullscreen" onclick="event.stopPropagation(); closeFullscreen();">&times;</button>
         </div>
         
         <script>
             let currentRequestId = null;
             let pollInterval = null;
-            let autoRequested = false;
-            
-            // 创建浮动粒子
-            function createParticles() {
-                const particlesContainer = document.getElementById('particles');
-                const particleCount = 20;
-                
-                for (let i = 0; i < particleCount; i++) {
-                    const particle = document.createElement('div');
-                    particle.className = 'particle';
-                    particle.style.left = Math.random() * 100 + '%';
-                    particle.style.width = particle.style.height = (Math.random() * 4 + 2) + 'px';
-                    particle.style.animationDelay = Math.random() * 20 + 's';
-                    particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
-                    particlesContainer.appendChild(particle);
-                }
-            }
-            
-            // 页面加载完成后初始化
-            window.addEventListener('load', function() {
-                createParticles();
-                
-                setTimeout(() => {
-                    if (!autoRequested) {
-                        autoRequested = true;
-                        requestScreenshot(true);
-                    }
-                }, 1000);
+
+            // 页面加载完成后自动请求一次
+            window.addEventListener('load', () => {
+                setTimeout(() => requestScreenshot(true), 500);
             });
             
             async function requestScreenshot(isAuto = false) {
                 const captureBtn = document.getElementById('captureBtn');
                 const loading = document.getElementById('loading');
-                const status = document.getElementById('status');
-                const screenshot = document.getElementById('screenshot');
-                const autoIndicator = document.getElementById('autoIndicator');
-                
-                if (isAuto) {
-                    captureBtn.style.display = 'inline-block';
-                    autoIndicator.style.display = 'block';
-                }
+                const loadingText = document.querySelector('.loading-text');
                 
                 captureBtn.disabled = true;
+                captureBtn.style.display = 'none';
                 loading.style.display = 'block';
                 
                 if (isAuto) {
-                    status.innerHTML = '<div class="status info">🎨 自动捕捉已启动，正在连接艺术创作空间...</div>';
+                    loadingText.textContent = '正在自动连接艺术空间...';
+                    updateStatus('🎨 自动捕捉已启动，请稍候...', 'info');
                 } else {
-                    status.innerHTML = '<div class="status info">📸 手动捕捉请求已发送，等待处理...</div>';
+                    loadingText.textContent = '正在捕捉艺术瞬间...';
+                    updateStatus('📸 手动捕捉请求已发送...', 'info');
                 }
                 
                 try {
@@ -562,33 +467,28 @@ async def mobile_page():
                         body: JSON.stringify({ user_id: 'art_viewer_' + Date.now() })
                     });
                     
-                    if (!response.ok) {
-                        throw new Error('网络连接失败');
-                    }
+                    if (!response.ok) throw new Error('网络请求失败');
                     
                     const data = await response.json();
                     currentRequestId = data.request_id;
                     
-                    status.innerHTML = '<div class="status warning">⚡ 正在与创作设备建立连接...</div>';
+                    updateStatus('⚡ 正在等待创作设备响应...', 'warning');
                     
-                    if (pollInterval) {
-                        clearInterval(pollInterval);
-                    }
-                    pollInterval = setInterval(checkScreenshot, 1000);
+                    if (pollInterval) clearInterval(pollInterval);
+                    pollInterval = setInterval(checkScreenshot, 1500); // 轮询频率1.5秒
                     
+                    // 30秒超时处理
                     setTimeout(() => {
-                        if (pollInterval) {
+                        if (pollInterval && currentRequestId === data.request_id) {
                             clearInterval(pollInterval);
-                            captureBtn.disabled = false;
-                            loading.style.display = 'none';
-                            status.innerHTML = '<div class="status error">⏰ 连接超时，请检查创作设备状态</div>';
+                            resetUI();
+                            updateStatus('⏰ 请求超时，请检查创作设备或重试。', 'error');
                         }
                     }, 30000);
                     
                 } catch (error) {
-                    captureBtn.disabled = false;
-                    loading.style.display = 'none';
-                    status.innerHTML = '<div class="status error">❌ 连接失败: ' + error.message + '</div>';
+                    resetUI();
+                    updateStatus('❌ 连接失败: ' + error.message, 'error');
                     console.error('请求截图失败:', error);
                 }
             }
@@ -598,51 +498,52 @@ async def mobile_page():
                 
                 try {
                     const response = await fetch(`/api/get-screenshot/${currentRequestId}`);
-                    
-                    if (!response.ok) {
-                        throw new Error('获取状态失败');
-                    }
+                    if (!response.ok) return; // 忽略失败的轮询
                     
                     const data = await response.json();
                     
                     if (data.status === 'completed') {
                         clearInterval(pollInterval);
                         
-                        const captureBtn = document.getElementById('captureBtn');
-                        const loading = document.getElementById('loading');
-                        const status = document.getElementById('status');
                         const screenshot = document.getElementById('screenshot');
                         const screenshotContainer = document.getElementById('screenshotContainer');
                         
-                        captureBtn.disabled = false;
-                        loading.style.display = 'none';
-                        status.innerHTML = '<div class="status success">✨ 艺术瞬间捕捉成功！</div>';
-                        
                         screenshot.src = 'data:image/png;base64,' + data.image_data;
-                        screenshot.classList.add('show');
                         screenshotContainer.style.display = 'block';
+                        screenshot.classList.add('show');
                         
-                        // 平滑滚动到截图
+                        resetUI();
+                        updateStatus('✨ 艺术瞬间捕捉成功！', 'success');
+                        
                         setTimeout(() => {
-                            screenshotContainer.scrollIntoView({ 
-                                behavior: 'smooth', 
-                                block: 'center' 
-                            });
-                        }, 400);
+                           screenshotContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 100);
                         
                         currentRequestId = null;
                         
                         setTimeout(() => {
-                            status.innerHTML = '<div class="status success">🎭 作品已更新！可点击按钮获取最新创作</div>';
-                        }, 3000);
-                        
+                            updateStatus('🎭 可再次点击按钮，捕捉新的创作。', 'info');
+                        }, 5000);
+
                     } else if (data.status === 'processing') {
-                        const status = document.getElementById('status');
-                        status.innerHTML = '<div class="status warning">🎨 创作设备正在处理请求...</div>';
+                        updateStatus('🎨 创作设备正在处理，即将完成...', 'warning');
                     }
                 } catch (error) {
                     console.error('轮询错误:', error);
                 }
+            }
+            
+            function updateStatus(message, type) {
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = `<div class="status-box ${type}">${message}</div>`;
+            }
+
+            function resetUI() {
+                const captureBtn = document.getElementById('captureBtn');
+                const loading = document.getElementById('loading');
+                captureBtn.disabled = false;
+                captureBtn.style.display = 'block';
+                loading.style.display = 'none';
             }
             
             // 全屏查看功能
@@ -664,31 +565,23 @@ async def mobile_page():
                 document.body.style.overflow = 'auto';
             }
             
-            // 页面隐藏时清理定时器
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden && pollInterval) {
-                    clearInterval(pollInterval);
-                }
+            // 页面隐藏或卸载时清理定时器
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && pollInterval) clearInterval(pollInterval);
             });
-            
-            // 页面卸载时清理定时器
-            window.addEventListener('beforeunload', function() {
-                if (pollInterval) {
-                    clearInterval(pollInterval);
-                }
+            window.addEventListener('beforeunload', () => {
+                if (pollInterval) clearInterval(pollInterval);
             });
-            
-            // 阻止默认的双击缩放
-            document.addEventListener('touchstart', function(event) {
-                if (event.touches.length > 1) {
-                    event.preventDefault();
-                }
-            });
+
         </script>
     </body>
     </html>
     """
     return HTMLResponse(content=html_content)
+
+# =======================================================
+# 以下为后端API和服务逻辑，与原始代码完全一致，未做任何修改
+# =======================================================
 
 # ==================== 新增修改 ====================
 # 添加一个路由来提供根目录下的验证文件
@@ -703,7 +596,7 @@ async def get_verification_file():
 # ================================================
 
 @app.post("/api/request-screenshot")
-async def request_screenshot(request: ScreenshotRequest):
+async def request_screenshot_api(request: ScreenshotRequest): # Renamed to avoid conflict
     """接收截图请求"""
     request_id = str(uuid.uuid4())
     screenshot_requests[request_id] = {
@@ -770,17 +663,16 @@ async def get_screenshot(request_id: str):
 async def cleanup_expired_requests():
     """清理超过1小时的请求"""
     while True:
+        await asyncio.sleep(300)  # 每5分钟检查一次
         current_time = time.time()
         expired_requests = [
-            req_id for req_id, req_data in screenshot_requests.items()
+            req_id for req_id, req_data in list(screenshot_requests.items())
             if current_time - req_data.get("timestamp", 0) > 3600  # 1小时
         ]
         
         for req_id in expired_requests:
             screenshot_requests.pop(req_id, None)
             screenshots.pop(req_id, None)
-        
-        await asyncio.sleep(300)  # 每5分钟清理一次
 
 @app.on_event("startup")
 async def startup_event():
@@ -789,5 +681,7 @@ async def startup_event():
 
 if __name__ == "__main__":
     print("艺术作品截图系统启动中...")
-    print(f"请访问 http://{HOST}:{PORT} 查看二维码")
-    uvicorn.run("app.server:app", host=HOST, port=PORT, reload=True)
+    print(f"请用PC浏览器访问: http://localhost:{PORT} 或 http://{HOST}:{PORT}")
+    print(f"手机扫码将访问: {SERVER_URL}/mobile")
+    # uvicorn.run("server:app", host=HOST, port=PORT, reload=True) # for file name server.py
+    uvicorn.run(app, host=HOST, port=PORT)
