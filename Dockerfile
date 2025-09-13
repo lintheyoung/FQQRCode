@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     tcl8.6-dev \
     tk8.6-dev \
     python3-tk \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件并安装 Python 包
@@ -29,6 +30,11 @@ COPY app/ ./app/
 # 创建静态文件目录
 RUN mkdir -p /app/static
 
+# ==================== 新增修改 ====================
+# 复制验证文件到静态目录
+COPY 60d1dbab8d131699df1df834e9fc0fd8.txt ./app/static/
+# ================================================
+
 # 设置环境变量
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
@@ -36,7 +42,7 @@ ENV PYTHONUNBUFFERED=1
 # 暴露端口
 EXPOSE 8000
 
-# 健康检查
+# 健康检查 (在基础镜像中添加了 curl)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/ || exit 1
 

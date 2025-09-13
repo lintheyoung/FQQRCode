@@ -16,7 +16,7 @@ from io import BytesIO
 # 环境变量配置
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 8000))
-SERVER_URL = os.getenv("SERVER_URL", f"http://localhost:7979")  # 默认使用7979端口
+SERVER_URL = os.getenv("SERVER_URL", f"http://localhost:{PORT}") # 动态使用端口
 
 app = FastAPI()
 
@@ -690,7 +690,18 @@ async def mobile_page():
     """
     return HTMLResponse(content=html_content)
 
-# 其余代码保持不变
+# ==================== 新增修改 ====================
+# 添加一个路由来提供根目录下的验证文件
+@app.get("/60d1dbab8d131699df1df834e9fc0fd8.txt", response_class=FileResponse)
+async def get_verification_file():
+    """提供根目录下的验证文件"""
+    # 从 static 目录中返回该文件
+    file_path = "static/60d1dbab8d131699df1df834e9fc0fd8.txt"
+    if os.path.exists(file_path):
+        return FileResponse(path=file_path, media_type='text/plain')
+    raise HTTPException(status_code=404, detail="File not found")
+# ================================================
+
 @app.post("/api/request-screenshot")
 async def request_screenshot(request: ScreenshotRequest):
     """接收截图请求"""
@@ -762,7 +773,7 @@ async def cleanup_expired_requests():
         current_time = time.time()
         expired_requests = [
             req_id for req_id, req_data in screenshot_requests.items()
-            if current_time - req_data["timestamp"] > 3600  # 1小时
+            if current_time - req_data.get("timestamp", 0) > 3600  # 1小时
         ]
         
         for req_id in expired_requests:
@@ -778,6 +789,5 @@ async def startup_event():
 
 if __name__ == "__main__":
     print("艺术作品截图系统启动中...")
-    print("请访问 http://localhost:8000 查看二维码")
-    print("注意：请将代码中的 'your-server-ip' 替换为你的实际服务器IP地址")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    print(f"请访问 http://{HOST}:{PORT} 查看二维码")
+    uvicorn.run("app.server:app", host=HOST, port=PORT, reload=True)
