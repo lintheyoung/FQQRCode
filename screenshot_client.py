@@ -24,12 +24,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class ScreenshotClient:
-    def __init__(self, server_url: str = "http://localhost:8000", capture_region: Optional[Tuple[int, int, int, int]] = None):
+    def __init__(self, server_url: str = "https://fq.video2tag.com", capture_region: Optional[Tuple[int, int, int, int]] = None):
         """
         初始化截图客户端
         
         Args:
-            server_url: 服务器地址，例如 "http://192.168.1.100:8000"
+            server_url: 服务器地址，例如 "https://fq.video2tag.com"
             capture_region: 截图区域 (x, y, width, height)，None表示全屏截图
         """
         self.server_url = server_url.rstrip('/')
@@ -187,7 +187,7 @@ class ScreenshotClient:
             logger.error(f"服务器连接测试失败: {e}")
             return False
     
-    def run(self, poll_interval: float = 2.0):
+    def run(self, poll_interval: float = 0.8):
         """
         启动客户端主循环
         
@@ -470,15 +470,15 @@ def main():
     capture_region = get_capture_region()
     
     # 服务器地址配置
-    server_url = input("\n请输入服务器地址 (默认: http://localhost:8000): ").strip()
+    server_url = input("\n请输入服务器地址 (默认: https://fq.video2tag.com): ").strip()
     if not server_url:
-        server_url = "http://localhost:8000"
+        server_url = "https://fq.video2tag.com"
     
     # 轮询间隔配置
     try:
-        poll_interval = float(input("请输入轮询间隔秒数 (默认: 2): ") or "2")
+        poll_interval = float(input("请输入轮询间隔秒数 (默认: 0.8): ") or "0.8")
     except ValueError:
-        poll_interval = 2.0
+        poll_interval = 0.8
     
     print(f"\n=== 配置信息 ===")
     print(f"服务器地址: {server_url}")
