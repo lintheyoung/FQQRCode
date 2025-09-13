@@ -32,7 +32,7 @@ RUN mkdir -p /app/static
 
 # ==================== 新增修改 ====================
 # 复制验证文件到静态目录
-COPY 60d1dbab8d131699df1df834e9fc0fd8.txt ./app/static/
+COPY 60d1dbab8d131699df1df834e9fc0fd8.txt ./static/
 # ================================================
 
 # 设置环境变量
