@@ -585,14 +585,14 @@ async def mobile_page():
 
 # ==================== 新增修改 ====================
 # 添加一个路由来提供根目录下的验证文件
-@app.get("/60d1dbab8d131699df1df834e9fc0fd8.txt", response_class=FileResponse)
-async def get_verification_file():
-    """提供根目录下的验证文件"""
-    # 从 static 目录中返回该文件
-    file_path = "static/60d1dbab8d131699df1df834e9fc0fd8.txt"
-    if os.path.exists(file_path):
-        return FileResponse(path=file_path, media_type='text/plain')
-    raise HTTPException(status_code=404, detail="File not found")
+# @app.get("/60d1dbab8d131699df1df834e9fc0fd8.txt", response_class=FileResponse)
+# async def get_verification_file():
+#     """提供根目录下的验证文件"""
+#     # 从 static 目录中返回该文件
+#     file_path = "static/60d1dbab8d131699df1df834e9fc0fd8.txt"
+#     if os.path.exists(file_path):
+#         return FileResponse(path=file_path, media_type='text/plain')
+#     raise HTTPException(status_code=404, detail="File not found")
 # ================================================
 
 @app.post("/api/request-screenshot")
